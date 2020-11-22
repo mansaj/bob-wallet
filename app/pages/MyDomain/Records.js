@@ -136,17 +136,24 @@ class Records extends Component {
           record={record}
           onEdit={this.makeOnEdit(i)}
           onRemove={() => this.onRemove(i)}
+          disabled={!this.props.domain || !this.props.domain.isOwner}
         />
       );
     });
   }
 
   renderCreateRecord() {
-    return <CreateRecord name={this.props.name} onCreate={this.onCreate} />;
+    return (
+      <CreateRecord
+        name={this.props.name}
+        onCreate={this.onCreate}
+        disabled={!this.props.domain || !this.props.domain.isOwner}
+      />
+    );
   }
 
   renderActionRow() {
-    return (
+    return (this.props.domain && this.props.domain.isOwner) && (
       <TableRow className="records-table__action-row">
         <div className="records-table__action-row__error-message">
           {this.state.errorMessage}
