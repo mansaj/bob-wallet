@@ -12,6 +12,7 @@ import deepEqual from 'deep-equal';
 import * as logger from '../../utils/logClient';
 import { showSuccess } from '../../ducks/notifications';
 import { clientStub as aClientStub } from '../../background/analytics/client';
+import {clearDeeplinkParams} from "../../ducks/app";
 
 const analytics = aClientStub(() => require('electron').ipcRenderer);
 
@@ -25,8 +26,10 @@ class Records extends Component {
     name: PropTypes.string.isRequired,
     resource: PropTypes.object,
     pendingData: PropTypes.object,
+    deeplinkParams: PropTypes.object.isRequired,
     showSuccess: PropTypes.func.isRequired,
     sendUpdate: PropTypes.func.isRequired,
+    clearDeeplinkParams: PropTypes.func.isRequired,
     transferring: PropTypes.bool.isRequired,
   };
 
@@ -56,10 +59,34 @@ class Records extends Component {
   }
 
   static getDerivedStateFromProps(props, state) {
-    if (state.updatedResource.__isDefault__ && props.resource) {
+    let updatedResource = JSON.parse(JSON.stringify(state.updatedResource));
+
+    if (updatedResource.__isDefault__) {
+      if (props.resource) {
+        updatedResource = props.resource;
+      }
+
       return {
         ...state,
-        updatedResource: props.resource,
+        updatedResource: updatedResource,
+      };
+    }
+
+    if (props.deeplinkParams.txt && props.domain && props.domain.isOwner) {
+      props.clearDeeplinkParams();
+
+      if (props.resource) {
+        updatedResource = props.resource;
+      }
+
+      updatedResource.records.push({
+        type: 'TXT',
+        txt: [props.deeplinkParams.txt],
+      });
+
+      return {
+        ...state,
+        updatedResource: updatedResource,
       };
     }
 
@@ -128,10 +155,15 @@ class Records extends Component {
 
   renderRows() {
     const resource = this.state.updatedResource;
+    const oldResource = this.props.resource;
+
     return resource.records.map((record, i) => {
+      const oldrecord = oldResource && oldResource.records[i];
+
       return (
         <EditableRecord
           key={`${this.props.name}-${record.type}-${i}`}
+          className={deepEqual(oldrecord, record) ? '' : 'edited-record'}
           name={this.props.name}
           record={record}
           onEdit={this.makeOnEdit(i)}
@@ -222,16 +254,19 @@ export default withRouter(
     (state, ownProps) => {
       const domain = state.names[ownProps.name];
       const resource = getDecodedResource(domain);
+      const deeplinkParams = state.app.deeplinkParams;
 
       return {
         domain,
         resource,
         pendingData: getPendingData(domain),
+        deeplinkParams,
       };
     },
     dispatch => ({
       sendUpdate: (name, json) => dispatch(nameActions.sendUpdate(name, json)),
       showSuccess: (message) => dispatch(showSuccess(message)),
+      clearDeeplinkParams: () => dispatch(clearDeeplinkParams()),
     }),
   )(Records),
 );

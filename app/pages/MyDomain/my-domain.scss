@@ -108,6 +108,10 @@
   margin-top: 2rem;
   position: relative;
 
+  .edited-record {
+    background-color: rgba($school-bus-yellow, .1);
+  }
+
   &__actions {
     @extend %row-nowrap;
     justify-content: flex-end;

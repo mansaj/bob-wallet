@@ -111,7 +111,7 @@ class MyDomain extends Component {
             transferring={!!domain.info && domain.info.transfer !== 0}
           />
         </Collapsible>
-        <Collapsible className="my-domain__info-panel" title="Your Bids" defaultCollapsed>
+        <Collapsible className="my-domain__info-panel" title="Bid History" defaultCollapsed>
           {
             this.props.domain
               ? (
